@@ -61,7 +61,14 @@ Type `help` once it starts. The prompt shows the file name, a `*` if there are u
 
 Line numbers are **1-based**. Shortcuts: `n` `o` `s` `sa` `c` `v` `a` `i` `e` `d` `cp` `x` `p` `u` `q`.
 
-`open` and `saveas` accept `~` for your home directory (`saveas ~/notes.txt`). Java does not expand `~` on its own — the editor does that before creating the file, so you do not get a literal `~` folder in the project.
+`open` and `saveas` expand a few tokens Java would otherwise treat as folder names:
+
+- `~` / `~/notes.txt` / `~\notes.txt` — home directory
+- `%USERPROFILE%\notes.txt` — Command Prompt style (any `%VAR%` from the environment)
+- `$HOME/notes.txt` — PowerShell / Git Bash style (`$HOME` falls back to the same home as `~` if `HOME` is unset)
+- Wrapping quotes are stripped: `saveas "C:\My Documents\notes.txt"`
+
+Git Bash `/c/Users/...` paths are not rewritten; use `C:\...` or `~` instead.
 
 Unsaved work is protected: `new`, `open`, `close`, and `quit` ask before discarding changes.
 
@@ -72,6 +79,7 @@ Unsaved work is protected: `new`, `open`, `close`, and `quit` ask before discard
 | `Document` | Line-based buffer, dirty flag, load/save |
 | `Clipboard` | In-app copy / cut / paste |
 | `UndoManager` | Snapshot undo before each change (up to 50) |
+| `UserPath` | Expands `~`, `%VAR%`, `$HOME`, and wrapping quotes |
 | `ConsoleTextEditor` | Command loop and UI |
 
 Comments in the source walk through the design choices.
