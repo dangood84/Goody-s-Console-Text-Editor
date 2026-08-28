@@ -14,16 +14,19 @@ import java.util.List;
  */
 public final class Clipboard {
 
-    private List<String> contents = List.of();
+    // WORKING (Java 8): List.of() is Java 9. emptyList() is the same idea —
+    // an immutable empty list so we never accidentally add to a null clipboard.
+    private List<String> contents = Collections.emptyList();
 
     public boolean isEmpty() {
         return contents.isEmpty();
     }
 
     public void copy(List<String> lines) {
-        // WORKING: copy the list so later document edits cannot change what
-        // is sitting on the clipboard.
-        this.contents = List.copyOf(new ArrayList<>(lines));
+        // WORKING (Java 8): List.copyOf(...) is Java 10. Copy into a new
+        // ArrayList, then wrap it unmodifiable so later document edits cannot
+        // change what is sitting on the clipboard.
+        this.contents = Collections.unmodifiableList(new ArrayList<>(lines));
     }
 
     public List<String> paste() {

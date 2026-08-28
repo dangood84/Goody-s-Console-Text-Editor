@@ -1,6 +1,7 @@
 package consoleeditor;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -8,7 +9,7 @@ import java.util.regex.Pattern;
  * Turns a path the user typed into a real filesystem path.
  *
  * WORKING: once you are inside the editor, no shell is expanding tokens.
- * Java's Path.of treats ~, %USERPROFILE%, and $HOME as literal folder names.
+ * Java's Paths.get treats ~, %USERPROFILE%, and $HOME as literal folder names.
  * We do the small set of expansions a user would expect, then hand off to Path.
  *
  * Intentionally not handled: Git Bash /c/Users/... (MSYS) paths. Those are a
@@ -28,13 +29,15 @@ final class UserPath {
         path = expand(WINDOWS_ENV, path);
         path = expand(UNIX_BRACED_ENV, path);
         path = expand(UNIX_ENV, path);
-        // WORKING: Windows users type backslashes. Path.of only treats \ as a
+        // WORKING: Windows users type backslashes. Paths.get only treats \ as a
         // separator on Windows, so "%USERPROFILE%\notes.txt" would become one
         // odd filename on Unix. Forward slashes are valid on both families
         // (including Windows UNC as //server/share).
         path = path.replace('\\', '/');
         path = expandLeadingTilde(path);
-        return Path.of(path).toAbsolutePath().normalize();
+        // WORKING (Java 8): Path.of(...) arrived in Java 11. Paths.get is the
+        // Java 7 NIO.2 equivalent and behaves the same for a single path string.
+        return Paths.get(path).toAbsolutePath().normalize();
     }
 
     /**
@@ -62,7 +65,9 @@ final class UserPath {
      */
     private static String expand(Pattern pattern, String path) {
         Matcher matcher = pattern.matcher(path);
-        StringBuilder out = new StringBuilder();
+        // WORKING (Java 8): Matcher.appendReplacement/appendTail gained a
+        // StringBuilder overload in Java 9. On 8 they only accept StringBuffer.
+        StringBuffer out = new StringBuffer();
         while (matcher.find()) {
             String token = matcher.group(0);
             String name = matcher.group(1);
@@ -80,7 +85,9 @@ final class UserPath {
     private static String lookup(String name, String originalToken) {
         if ("HOME".equals(name)) {
             String home = System.getenv("HOME");
-            return home != null && !home.isBlank() ? home : System.getProperty("user.home");
+            // WORKING (Java 8): String.isBlank() is Java 11. trim + isEmpty
+            // treats whitespace-only HOME the same way isBlank would.
+            return home != null && !home.trim().isEmpty() ? home : System.getProperty("user.home");
         }
         String value = System.getenv(name);
         return value != null ? value : originalToken;
@@ -92,7 +99,7 @@ final class UserPath {
             return home;
         }
         if (path.startsWith("~/")) {
-            return Path.of(home).resolve(path.substring(2)).toString();
+            return Paths.get(home).resolve(path.substring(2)).toString();
         }
         return path;
     }

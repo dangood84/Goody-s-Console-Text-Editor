@@ -4,8 +4,8 @@ A small line-oriented text editor that runs in your terminal. Create, open, save
 
 ## Requirements
 
-- A **JDK 17+** on your `PATH` (`java` and `javac`). Java 15 is the real language floor (text blocks); 17 is what this repo pins.
-- On macOS/Linux with [jenv](https://www.jenv.be/), `.java-version` selects 17 in this folder. Windows does not need jenv — just install a JDK and put it on `PATH`.
+- A **JDK 8 or newer** on your `PATH` (`java` and `javac`). The source is written for Java 8 so it compiles at work on 8 and at home on 17+.
+- On macOS/Linux with [jenv](https://www.jenv.be/), `.java-version` selects **1.8** in this folder. Windows does not need jenv — just install a JDK and put it on `PATH`.
 
 ## Where it runs
 

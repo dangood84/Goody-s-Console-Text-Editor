@@ -108,8 +108,7 @@ public final class Document {
 
     private void writeTo(Path target) throws IOException {
         // WORKING: UTF-8 is the safe default for a simple editor.
-        // Files.write creates/overwrites the file with the current lines.
-        // We join with the platform newline via Files.write(List).
+        // Files.write / createDirectories are Java 7 NIO.2, so they are fine on 8.
         if (target.getParent() != null) {
             Files.createDirectories(target.getParent());
         }

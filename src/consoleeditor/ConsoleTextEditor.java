@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -20,9 +21,13 @@ import java.util.Locale;
  * and wait for the next one. That keeps the code small and easy to follow —
  * no need for raw terminal control or a GUI toolkit.
  *
- * Run:
+ * Run (Java 8 or newer):
  *   javac -d out src/consoleeditor/*.java
  *   java -cp out consoleeditor.ConsoleTextEditor
+ *
+ * WORKING (Java 8): this source is written to compile on JDK 8. Newer APIs
+ * (text blocks, Path.of, List.of, String.isBlank) are avoided on purpose so
+ * the same tree runs at work on 8 and at home on 17+.
  */
 public final class ConsoleTextEditor {
 
@@ -190,7 +195,7 @@ public final class ConsoleTextEditor {
     private void openFile(String rest) throws IOException {
         if (rest.isEmpty()) {
             rest = ask("  Path to open: ");
-            if (rest == null || rest.isBlank()) {
+            if (isBlank(rest)) {
                 println("  Open cancelled.");
                 return;
             }
@@ -224,7 +229,7 @@ public final class ConsoleTextEditor {
         requireOpen();
         if (rest.isEmpty()) {
             rest = ask("  Save as path: ");
-            if (rest == null || rest.isBlank()) {
+            if (isBlank(rest)) {
                 println("  Save cancelled.");
                 return;
             }
@@ -242,7 +247,8 @@ public final class ConsoleTextEditor {
         println("  Closed " + document.displayName() + ".");
         document = null;
         undo.clear();
-        clipboard.copy(List.of()); // WORKING: closing the file also clears the selection clipboard.
+        // WORKING (Java 8): List.of() is Java 9. emptyList() is the 8 equivalent.
+        clipboard.copy(Collections.<String>emptyList());
     }
 
     // -------------------------------------------------------------------------
@@ -294,7 +300,8 @@ public final class ConsoleTextEditor {
             return;
         }
         undo.remember(document);
-        document.insertLines(index, List.of(text));
+        // WORKING (Java 8): List.of(text) is Java 9. singletonList is the 8 equivalent.
+        document.insertLines(index, Collections.singletonList(text));
         println("  Inserted at line " + at + ".");
     }
 
@@ -459,30 +466,39 @@ public final class ConsoleTextEditor {
         return "[" + document.displayName() + mark + " | " + document.lineCount() + " lines] > ";
     }
 
-    private void printHelp() {
-        println("""
-                Commands
-                  new                 create a blank untitled file
-                  open [path]         open an existing file
-                  save                save the current file
-                  saveas [path]       save under a new name
-                  close               close the current file
-                  view                show numbered lines
-                  append              add lines at the end (finish with a lone .)
-                  insert <n>          insert a line before line n
-                  edit <n>            replace line n
-                  delete <n> [m]      delete line n, or lines n through m
-                  copy <n> [m]        copy line(s) to the clipboard
-                  cut <n> [m]         copy line(s) then delete them
-                  paste <n>           insert clipboard contents before line n
-                  undo                reverse the last change
-                  help                this list
-                  quit                exit
+    /**
+     * WORKING (Java 8): String.isBlank() arrived in Java 11. trim + isEmpty
+     * is the usual stand-in (null is treated as blank too).
+     */
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
 
-                Line numbers are 1-based. A trailing * in the prompt means unsaved changes.
-                Paths: ~  %USERPROFILE%  $HOME  — wrapping quotes are stripped.
-                Shortcuts: n o s sa c v a i e d cp x p u q
-                """);
+    private void printHelp() {
+        // WORKING (Java 8): text blocks (""") are Java 15. String.join is Java 8
+        // and keeps the help text readable without a 15+ compiler.
+        println(String.join("\n",
+                "Commands",
+                "  new                 create a blank untitled file",
+                "  open [path]         open an existing file",
+                "  save                save the current file",
+                "  saveas [path]       save under a new name",
+                "  close               close the current file",
+                "  view                show numbered lines",
+                "  append              add lines at the end (finish with a lone .)",
+                "  insert <n>          insert a line before line n",
+                "  edit <n>            replace line n",
+                "  delete <n> [m]      delete line n, or lines n through m",
+                "  copy <n> [m]        copy line(s) to the clipboard",
+                "  cut <n> [m]         copy line(s) then delete them",
+                "  paste <n>           insert clipboard contents before line n",
+                "  undo                reverse the last change",
+                "  help                this list",
+                "  quit                exit",
+                "",
+                "Line numbers are 1-based. A trailing * in the prompt means unsaved changes.",
+                "Paths: ~  %USERPROFILE%  $HOME  — wrapping quotes are stripped.",
+                "Shortcuts: n o s sa c v a i e d cp x p u q"));
     }
 
     private static void println(String text) {
