@@ -198,7 +198,7 @@ public final class ConsoleTextEditor {
         if (!confirmAbandonIfDirty("Open another file")) {
             return;
         }
-        Path path = Path.of(rest).toAbsolutePath().normalize();
+        Path path = resolveUserPath(rest);
         if (!Files.isRegularFile(path)) {
             println("  No such file: " + path);
             return;
@@ -229,7 +229,7 @@ public final class ConsoleTextEditor {
                 return;
             }
         }
-        Path path = Path.of(rest).toAbsolutePath().normalize();
+        Path path = resolveUserPath(rest);
         document.saveAs(path);
         println("  Saved " + path);
     }
@@ -445,6 +445,26 @@ public final class ConsoleTextEditor {
         return added;
     }
 
+    /**
+     * WORKING: Java's Path.of does not expand ~ the way a shell does.
+     * "saveas ~/notes.txt" would otherwise create a folder literally named "~"
+     * in the current directory. ~ and ~/... (also ~\... on Windows) map onto
+     * user.home, which is the real home on Unix, macOS, and Windows.
+     * We only expand when ~ is the whole path or followed by a separator, so
+     * a file named "~backup.txt" is left alone.
+     */
+    static Path resolveUserPath(String raw) {
+        String trimmed = raw.trim();
+        String home = System.getProperty("user.home");
+        if (trimmed.equals("~")) {
+            return Path.of(home).toAbsolutePath().normalize();
+        }
+        if (trimmed.startsWith("~/") || trimmed.startsWith("~\\")) {
+            return Path.of(home).resolve(trimmed.substring(2)).toAbsolutePath().normalize();
+        }
+        return Path.of(trimmed).toAbsolutePath().normalize();
+    }
+
     private String ask(String prompt) throws IOException {
         System.out.print(prompt);
         System.out.flush();
@@ -480,6 +500,7 @@ public final class ConsoleTextEditor {
                   quit                exit
 
                 Line numbers are 1-based. A trailing * in the prompt means unsaved changes.
+                Paths may start with ~ for your home folder (saveas ~/notes.txt).
                 Shortcuts: n o s sa c v a i e d cp x p u q
                 """);
     }

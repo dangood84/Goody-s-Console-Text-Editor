@@ -1,0 +1,3 @@
+Hello my new text editor.
+saveas /usr/Users/dangood/Documents/textfileNewTextEditor.txt
+help

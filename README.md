@@ -61,6 +61,8 @@ Type `help` once it starts. The prompt shows the file name, a `*` if there are u
 
 Line numbers are **1-based**. Shortcuts: `n` `o` `s` `sa` `c` `v` `a` `i` `e` `d` `cp` `x` `p` `u` `q`.
 
+`open` and `saveas` accept `~` for your home directory (`saveas ~/notes.txt`). Java does not expand `~` on its own — the editor does that before creating the file, so you do not get a literal `~` folder in the project.
+
 Unsaved work is protected: `new`, `open`, `close`, and `quit` ask before discarding changes.
 
 ## Layout
